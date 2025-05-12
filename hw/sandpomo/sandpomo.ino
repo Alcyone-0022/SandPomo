@@ -8,7 +8,7 @@
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 unsigned long prevMillis = 0;
-unsigned long pomodoroTime = 5*60*1000;
+unsigned long pomodoroTime = 1*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
 bool direction = false;
@@ -17,6 +17,10 @@ byte upperLedVal = MAX_BRIGHTNESS;
 byte middle2LedVal = MAX_BRIGHTNESS;
 byte middle1LedVal = MAX_BRIGHTNESS;
 byte lowerLedVal = MAX_BRIGHTNESS;
+
+// 색상 모드 열거형
+enum ColorMode { RED, GREEN };
+ColorMode colorModeNow = RED;
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
@@ -46,11 +50,12 @@ void loop() {
     }
 
     Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
-    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction);
+    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, colorModeNow);
 
     if (timeLeft - fadeInterval >= fadeInterval) {
       timeLeft = timeLeft - fadeInterval;
     } else {
+      // TIME IS UP!
       // initialize pomodoro timer
       timeLeft = pomodoroTime;
 
@@ -62,32 +67,66 @@ void loop() {
       middle2LedVal = MAX_BRIGHTNESS;
       middle1LedVal = MAX_BRIGHTNESS;
       lowerLedVal = MAX_BRIGHTNESS;
+      // change colormod
+      colorModeNow = (colorModeNow == RED) ? GREEN : RED;
     }
 
   }
 
 }
 
-void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse){
+void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode) {
+  uint8_t r = (colorMode == RED) ? upper : 0;
+  uint8_t g = (colorMode == GREEN) ? upper : 0;
+  uint8_t r_mid2 = (colorMode == RED) ? mid2 : 0;
+  uint8_t g_mid2 = (colorMode == GREEN) ? mid2 : 0;
+  uint8_t r_mid1 = (colorMode == RED) ? mid1 : 0;
+  uint8_t g_mid1 = (colorMode == GREEN) ? mid1 : 0;
+  uint8_t r_lower = (colorMode == RED) ? lower : 0;
+  uint8_t g_lower = (colorMode == GREEN) ? lower : 0;
+
   if (!reverse) {
-    strip.setPixelColor(0, upper, 0, 0, 0);
-    strip.setPixelColor(1, mid2, 0, 0, 0);
-    strip.setPixelColor(2, mid1, 0, 0, 0);
-    strip.setPixelColor(3, lower, 0, 0, 0);
-    strip.setPixelColor(4, MAX_BRIGHTNESS-lower, 0, 0, 0);
-    strip.setPixelColor(5, MAX_BRIGHTNESS-mid1, 0, 0, 0);
-    strip.setPixelColor(6, MAX_BRIGHTNESS-mid2, 0, 0, 0);
-    strip.setPixelColor(7, MAX_BRIGHTNESS-upper,0, 0, 0);
-    strip.show();
+    strip.setPixelColor(0, r, g, 0, 0);
+    strip.setPixelColor(1, r_mid2, g_mid2, 0, 0);
+    strip.setPixelColor(2, r_mid1, g_mid1, 0, 0);
+    strip.setPixelColor(3, r_lower, g_lower, 0, 0);
+    strip.setPixelColor(4, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - lower) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - lower) : 0, 
+      0, 0);
+    strip.setPixelColor(5, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - mid1) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - mid1) : 0, 
+      0, 0);
+    strip.setPixelColor(6, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - mid2) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - mid2) : 0, 
+      0, 0);
+    strip.setPixelColor(7, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - upper) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - upper) : 0, 
+      0, 0);
   } else {
-    strip.setPixelColor(7, upper, 0, 0, 0);
-    strip.setPixelColor(6, mid2, 0, 0, 0);
-    strip.setPixelColor(5, mid1, 0, 0, 0);
-    strip.setPixelColor(4, lower, 0, 0, 0);
-    strip.setPixelColor(3, MAX_BRIGHTNESS-lower, 0, 0, 0);
-    strip.setPixelColor(2, MAX_BRIGHTNESS-mid1, 0, 0, 0);
-    strip.setPixelColor(1, MAX_BRIGHTNESS-mid2, 0, 0, 0);
-    strip.setPixelColor(0, MAX_BRIGHTNESS-upper,0, 0, 0);
-    strip.show();
+    strip.setPixelColor(7, r, g, 0, 0);
+    strip.setPixelColor(6, r_mid2, g_mid2, 0, 0);
+    strip.setPixelColor(5, r_mid1, g_mid1, 0, 0);
+    strip.setPixelColor(4, r_lower, g_lower, 0, 0);
+    strip.setPixelColor(3, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - lower) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - lower) : 0, 
+      0, 0);
+    strip.setPixelColor(2, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - mid1) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - mid1) : 0, 
+      0, 0);
+    strip.setPixelColor(1, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - mid2) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - mid2) : 0, 
+      0, 0);
+    strip.setPixelColor(0, 
+      (colorMode == RED) ? (MAX_BRIGHTNESS - upper) : 0,
+      (colorMode == GREEN) ? (MAX_BRIGHTNESS - upper) : 0, 
+      0, 0);
   }
+  strip.show();
 }
