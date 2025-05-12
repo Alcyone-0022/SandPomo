@@ -10,18 +10,19 @@ Adafruit_NeoPixel strip(8, 8, ((1 << 6) | (1 << 4) | (0 << 2) | (2)) /*|< Transm
 
 unsigned long prevMillis = 0;
 unsigned long pomodoroTime = 1*60*1000;
+unsigned long restingTime = 0.5*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
 bool direction = false;
 
-byte upperLedVal = 20;
-byte middle2LedVal = 20;
-byte middle1LedVal = 20;
-byte lowerLedVal = 20;
+byte upperLedVal = 30;
+byte middle2LedVal = 30;
+byte middle1LedVal = 30;
+byte lowerLedVal = 30;
 
 // 색상 모드 열거형
 enum ColorMode { RED, GREEN };
-ColorMode colorModeNow = RED;
+ColorMode modeNow = RED;
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
@@ -36,38 +37,52 @@ void loop() {
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
 
-    if (timeLeft > pomodoroTime * 3 / 4) {
+    unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
+
+    if (timeLeft > timerNow * 3 / 4) {
       // upper LED: 255 → 0
-      upperLedVal = map(timeLeft, pomodoroTime, pomodoroTime * 3 / 4, 20, 0);
-    } else if (timeLeft > pomodoroTime * 2 / 4) {
+      upperLedVal = map(timeLeft, timerNow, timerNow * 3 / 4, 30, 0);
+    } else if (timeLeft > timerNow * 2 / 4) {
       // middle2 LED: 255 → 0
-      middle2LedVal = map(timeLeft, pomodoroTime * 3 / 4, pomodoroTime * 2 / 4, 20, 0);
-    } else if (timeLeft > pomodoroTime * 1 / 4) {
+      middle2LedVal = map(timeLeft, timerNow * 3 / 4, timerNow * 2 / 4, 30, 0);
+    } else if (timeLeft > timerNow * 1 / 4) {
       // middle1 LED: 255 → 0
-      middle1LedVal = map(timeLeft, pomodoroTime * 2 / 4, pomodoroTime * 1 / 4, 20, 0);
+      middle1LedVal = map(timeLeft, timerNow * 2 / 4, timerNow * 1 / 4, 30, 0);
     } else {
       // lower LED: 255 → 0
-      lowerLedVal = map(timeLeft, pomodoroTime * 1 / 4, 0, 20, 0);
+      lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, 30, 0);
     }
 
     HWCDCSerial.print(upperLedVal); HWCDCSerial.print(" "); HWCDCSerial.print(middle2LedVal); HWCDCSerial.print(" "); HWCDCSerial.print(middle1LedVal); HWCDCSerial.print(" "); HWCDCSerial.println(lowerLedVal);
-    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, colorModeNow);
+    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, modeNow);
 
     if (timeLeft - fadeInterval >= fadeInterval) {
       timeLeft = timeLeft - fadeInterval;
     } else {
-      // initialize pomodoro timer
-      timeLeft = pomodoroTime;
+      // TIME IS UP!
+
+      // initialize timer
+      if ( modeNow == RED) {
+        // colormod now is pomodoro
+        // change to resting
+        timeLeft = restingTime;
+      } else {
+        // colormod now is resting
+        // change to pomodoro
+        timeLeft = pomodoroTime;
+      }
+
+      // change colormod
+       modeNow = ( modeNow == RED) ? GREEN : RED;
 
       // reverse dim direction
       direction = !direction;
 
       // initialize led brightness val
-      upperLedVal = 20;
-      middle2LedVal = 20;
-      middle1LedVal = 20;
-      lowerLedVal = 20;
-      colorModeNow = (colorModeNow == RED) ? GREEN : RED;
+      upperLedVal = 30;
+      middle2LedVal = 30;
+      middle1LedVal = 30;
+      lowerLedVal = 30;
     }
 
   }
@@ -90,20 +105,20 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
     strip.setPixelColor(2, r_mid1, g_mid1, 0, 0);
     strip.setPixelColor(3, r_lower, g_lower, 0, 0);
     strip.setPixelColor(4,
-      (colorMode == RED) ? (20 - lower) : 0,
-      (colorMode == GREEN) ? (20 - lower) : 0,
+      (colorMode == RED) ? (30 - lower) : 0,
+      (colorMode == GREEN) ? (30 - lower) : 0,
       0, 0);
     strip.setPixelColor(5,
-      (colorMode == RED) ? (20 - mid1) : 0,
-      (colorMode == GREEN) ? (20 - mid1) : 0,
+      (colorMode == RED) ? (30 - mid1) : 0,
+      (colorMode == GREEN) ? (30 - mid1) : 0,
       0, 0);
     strip.setPixelColor(6,
-      (colorMode == RED) ? (20 - mid2) : 0,
-      (colorMode == GREEN) ? (20 - mid2) : 0,
+      (colorMode == RED) ? (30 - mid2) : 0,
+      (colorMode == GREEN) ? (30 - mid2) : 0,
       0, 0);
     strip.setPixelColor(7,
-      (colorMode == RED) ? (20 - upper) : 0,
-      (colorMode == GREEN) ? (20 - upper) : 0,
+      (colorMode == RED) ? (30 - upper) : 0,
+      (colorMode == GREEN) ? (30 - upper) : 0,
       0, 0);
   } else {
     strip.setPixelColor(7, r, g, 0, 0);
@@ -111,20 +126,20 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
     strip.setPixelColor(5, r_mid1, g_mid1, 0, 0);
     strip.setPixelColor(4, r_lower, g_lower, 0, 0);
     strip.setPixelColor(3,
-      (colorMode == RED) ? (20 - lower) : 0,
-      (colorMode == GREEN) ? (20 - lower) : 0,
+      (colorMode == RED) ? (30 - lower) : 0,
+      (colorMode == GREEN) ? (30 - lower) : 0,
       0, 0);
     strip.setPixelColor(2,
-      (colorMode == RED) ? (20 - mid1) : 0,
-      (colorMode == GREEN) ? (20 - mid1) : 0,
+      (colorMode == RED) ? (30 - mid1) : 0,
+      (colorMode == GREEN) ? (30 - mid1) : 0,
       0, 0);
     strip.setPixelColor(1,
-      (colorMode == RED) ? (20 - mid2) : 0,
-      (colorMode == GREEN) ? (20 - mid2) : 0,
+      (colorMode == RED) ? (30 - mid2) : 0,
+      (colorMode == GREEN) ? (30 - mid2) : 0,
       0, 0);
     strip.setPixelColor(0,
-      (colorMode == RED) ? (20 - upper) : 0,
-      (colorMode == GREEN) ? (20 - upper) : 0,
+      (colorMode == RED) ? (30 - upper) : 0,
+      (colorMode == GREEN) ? (30 - upper) : 0,
       0, 0);
   }
   strip.show();

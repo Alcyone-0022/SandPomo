@@ -9,6 +9,7 @@ Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 unsigned long prevMillis = 0;
 unsigned long pomodoroTime = 1*60*1000;
+unsigned long restingTime = 0.5*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
 bool direction = false;
@@ -20,7 +21,7 @@ byte lowerLedVal = MAX_BRIGHTNESS;
 
 // 색상 모드 열거형
 enum ColorMode { RED, GREEN };
-ColorMode colorModeNow = RED;
+ColorMode modeNow = RED;
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
@@ -35,29 +36,43 @@ void loop() {
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
 
-    if (timeLeft > pomodoroTime * 3 / 4) {
+    unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
+
+    if (timeLeft > timerNow * 3 / 4) {
       // upper LED: 255 → 0
-      upperLedVal = map(timeLeft, pomodoroTime, pomodoroTime * 3 / 4, MAX_BRIGHTNESS, 0);
-    } else if (timeLeft > pomodoroTime * 2 / 4) {
+      upperLedVal = map(timeLeft, timerNow, timerNow * 3 / 4, MAX_BRIGHTNESS, 0);
+    } else if (timeLeft > timerNow * 2 / 4) {
       // middle2 LED: 255 → 0
-      middle2LedVal = map(timeLeft, pomodoroTime * 3 / 4, pomodoroTime * 2 / 4, MAX_BRIGHTNESS, 0);
-    } else if (timeLeft > pomodoroTime * 1 / 4) {
+      middle2LedVal = map(timeLeft, timerNow * 3 / 4, timerNow * 2 / 4, MAX_BRIGHTNESS, 0);
+    } else if (timeLeft > timerNow * 1 / 4) {
       // middle1 LED: 255 → 0
-      middle1LedVal = map(timeLeft, pomodoroTime * 2 / 4, pomodoroTime * 1 / 4, MAX_BRIGHTNESS, 0);
+      middle1LedVal = map(timeLeft, timerNow * 2 / 4, timerNow * 1 / 4, MAX_BRIGHTNESS, 0);
     } else {
       // lower LED: 255 → 0
-      lowerLedVal = map(timeLeft, pomodoroTime * 1 / 4, 0, MAX_BRIGHTNESS, 0);
+      lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, MAX_BRIGHTNESS, 0);
     }
 
     Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
-    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, colorModeNow);
+    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, modeNow);
 
     if (timeLeft - fadeInterval >= fadeInterval) {
       timeLeft = timeLeft - fadeInterval;
     } else {
       // TIME IS UP!
-      // initialize pomodoro timer
-      timeLeft = pomodoroTime;
+
+      // initialize timer
+      if ( modeNow == RED) {
+        // colormod now is pomodoro
+        // change to resting
+        timeLeft = restingTime;
+      } else {
+        // colormod now is resting
+        // change to pomodoro
+        timeLeft = pomodoroTime;
+      }
+
+      // change colormod
+       modeNow = ( modeNow == RED) ? GREEN : RED;
 
       // reverse dim direction
       direction = !direction;
@@ -67,8 +82,6 @@ void loop() {
       middle2LedVal = MAX_BRIGHTNESS;
       middle1LedVal = MAX_BRIGHTNESS;
       lowerLedVal = MAX_BRIGHTNESS;
-      // change colormod
-      colorModeNow = (colorModeNow == RED) ? GREEN : RED;
     }
 
   }
