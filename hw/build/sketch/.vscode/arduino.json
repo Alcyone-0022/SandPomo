@@ -1,7 +1,0 @@
-#line 1 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\.vscode\\arduino.json"
-{
-    "configuration": "CDCOnBoot=default,PartitionScheme=default,CPUFreq=160,FlashMode=qio,FlashFreq=80,FlashSize=4M,UploadSpeed=921600,DebugLevel=none,EraseFlash=none",
-    "board": "esp32:esp32:Geekble_ESP32C3",
-    "sketch": "sandpomo.ino",
-    "output": "./build" 
-}
