@@ -1,12 +1,15 @@
 #line 1 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
-#include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
+#include <Wire.h>
+#include <MPU6050_light.h>
 
 #define LED_PIN     8
 #define NUM_LEDS    8
-#define MAX_BRIGHTNESS 30
+#define MAX_BRIGHTNESS 20
 
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
+MPU6050 mpu(Wire);
 
 unsigned long prevMillis = 0;
 unsigned long pomodoroTime = 1*60*1000;
@@ -27,20 +30,31 @@ ColorMode modeNow = RED;
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
 
-#line 29 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
+#line 32 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
 void setup();
-#line 35 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
+#line 45 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
 void loop();
-#line 91 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
+#line 119 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
-#line 29 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
+#line 32 "C:\\Users\\Seunggab Ha\\Desktop\\SandPomo\\hw\\sandpomo\\sandpomo.ino"
 void setup() {
   Serial.begin(9600);
+  Wire.setPins(3, 4);
+  Wire.begin();
+
+  byte status = mpu.begin();
+  while(status != 0){ delay(10); } // 센서 연결 확인
+  mpu.calcOffsets();  // 자이로/가속도계 오프셋 계산
+
   strip.begin();
   strip.show();
 }
 
-void loop() {  
+void loop() {
+  mpu.update();
+  float pitch = mpu.getAngleY(); // 보정된 Pitch
+  float roll = mpu.getAngleX();  // 보정된 Roll
+
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
 
@@ -62,6 +76,20 @@ void loop() {
 
     Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
     setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, modeNow);
+
+    Serial.print("Roll: ");
+    Serial.print(mpu.getAngleX());
+    Serial.print("°\tPitch: ");
+    Serial.print(mpu.getAngleY());
+    Serial.println("°");
+
+    // 자세 판별
+    if((abs(roll) < 20 && abs(roll) > 0) || (abs(roll) < 80 && abs(roll) > 50)) {
+      Serial.println("Upright position");
+    } else {
+      Serial.println("Lying down position");
+    }
+
 
     if (timeLeft - fadeInterval >= fadeInterval) {
       timeLeft = timeLeft - fadeInterval;

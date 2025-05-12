@@ -1,6 +1,5 @@
 C:\Users\Seunggab\ Ha\Desktop\SandPomo\hw\build\sketch\sandpomo.ino.cpp.o: \
  C:\Users\Seunggab\ Ha\Desktop\SandPomo\hw\build\sketch\sandpomo.ino.cpp \
- C:\Users\Seunggab\ Ha\Documents\Arduino\libraries\Adafruit_NeoPixel/Adafruit_NeoPixel.h \
  C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\cores\esp32/Arduino.h \
  C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\cores\esp32/esp_arduino_version.h \
  C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\tools\esp32-arduino-libs\idf-release_v5.4-2f7dcd86-v1\esp32c3/include/freertos/FreeRTOS-Kernel/include/freertos/FreeRTOS.h \
@@ -145,4 +144,10 @@ C:\Users\Seunggab\ Ha\Desktop\SandPomo\hw\build\sketch\sandpomo.ino.cpp.o: \
  C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\tools\esp32-arduino-libs\idf-release_v5.4-2f7dcd86-v1\esp32c3/include/esp_partition/include/esp_partition.h \
  C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\tools\esp32-arduino-libs\idf-release_v5.4-2f7dcd86-v1\esp32c3/include/esp_hw_support/include/hal/cpu_hal.h \
  C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\tools\esp32-arduino-libs\idf-release_v5.4-2f7dcd86-v1\esp32c3/include/esp_hw_support/include/hal/cpu_ll.h \
- C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\cores\esp32/freertos_stats.h
+ C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\cores\esp32/freertos_stats.h \
+ C:\Users\Seunggab\ Ha\Documents\Arduino\libraries\Adafruit_NeoPixel/Adafruit_NeoPixel.h \
+ C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\libraries\Wire\src/Wire.h \
+ C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\cores\esp32/esp32-hal.h \
+ C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\cores\esp32/esp32-hal-log.h \
+ C:\Users\Seunggab\ Ha\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.2.0\cores\esp32/HardwareI2C.h \
+ C:\Users\Seunggab\ Ha\Documents\Arduino\libraries\MPU6050_light\src/MPU6050_light.h
