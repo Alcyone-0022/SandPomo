@@ -27,6 +27,9 @@ byte lowerLedVal = 20;
 enum ColorMode { RED, GREEN };
 ColorMode modeNow = RED;
 
+enum PositionState { UP, DOWN };
+PositionState posNow = UP;
+
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
 
@@ -68,7 +71,7 @@ void loop() {
     }
 
     HWCDCSerial.print(upperLedVal); HWCDCSerial.print(" "); HWCDCSerial.print(middle2LedVal); HWCDCSerial.print(" "); HWCDCSerial.print(middle1LedVal); HWCDCSerial.print(" "); HWCDCSerial.println(lowerLedVal);
-    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, modeNow);
+    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
 
     HWCDCSerial.print("Roll: ");
     HWCDCSerial.print(mpu.getAngleX());
@@ -81,6 +84,15 @@ void loop() {
       HWCDCSerial.println("Upright position");
     } else {
       HWCDCSerial.println("Lying down position");
+    }
+
+    // uplight 방향 판별
+    if (abs(roll) < 30) {
+      posNow = UP;
+      HWCDCSerial.println("UP STATE");
+    } else {
+      posNow = DOWN;
+      HWCDCSerial.println("DOWN STATE");
     }
 
 

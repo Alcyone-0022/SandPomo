@@ -26,6 +26,9 @@ byte lowerLedVal = MAX_BRIGHTNESS;
 enum ColorMode { RED, GREEN };
 ColorMode modeNow = RED;
 
+enum PositionState { UP, DOWN };
+PositionState posNow = UP;
+
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
 
@@ -67,7 +70,7 @@ void loop() {
     }
 
     Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
-    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, direction, modeNow);
+    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
 
     Serial.print("Roll: ");
     Serial.print(mpu.getAngleX());
@@ -80,6 +83,15 @@ void loop() {
       Serial.println("Upright position");
     } else {
       Serial.println("Lying down position");
+    }
+
+    // uplight 방향 판별
+    if (abs(roll) < 30) {
+      posNow = UP;
+      Serial.println("UP STATE");
+    } else {
+      posNow = DOWN;
+      Serial.println("DOWN STATE");
     }
 
 
