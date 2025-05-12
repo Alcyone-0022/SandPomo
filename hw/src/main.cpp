@@ -8,7 +8,7 @@
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 unsigned long prevMillis = 0;
-unsigned long pomodoroTime = 1*60*1000;
+unsigned long pomodoroTime = 5*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
 bool direction = false;
