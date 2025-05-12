@@ -11,7 +11,10 @@ unsigned long prevMillis = 0;
 unsigned long pomodoroTime = 1*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 20; // 밝기 갱신 주기(ms)
-bool reversed = false;
+bool direction = false;
+
+//**** Forwards ****
+void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
 
 void setup() {
   Serial.begin(9600);
