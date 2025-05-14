@@ -5,17 +5,16 @@
 
 #define LED_PIN     8
 #define NUM_LEDS    8
-#define MAX_BRIGHTNESS 20
+#define MAX_BRIGHTNESS 10
 
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 MPU6050 mpu(Wire);
 
 unsigned long prevMillis = 0;
-unsigned long pomodoroTime = 1*60*1000;
+unsigned long pomodoroTime = 0.5*60*1000;
 unsigned long restingTime = 0.5*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
-bool direction = false;
 
 byte upperLedVal = MAX_BRIGHTNESS;
 byte middle2LedVal = MAX_BRIGHTNESS;
@@ -31,6 +30,7 @@ PositionState posNow = UP;
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
+PositionState getPosNow();
 
 void setup() {
   Serial.begin(9600);
@@ -46,10 +46,6 @@ void setup() {
 }
 
 void loop() {
-  mpu.update();
-  float pitch = mpu.getAngleY(); // 보정된 Pitch
-  float roll = mpu.getAngleX();  // 보정된 Roll
-
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
 
@@ -57,20 +53,26 @@ void loop() {
 
     if (timeLeft > timerNow * 3 / 4) {
       // upper LED: 255 → 0
-      upperLedVal = map(timeLeft, timerNow, timerNow * 3 / 4, MAX_BRIGHTNESS, 0);
+      upperLedVal = map(timeLeft, timerNow, timerNow * 3 / 4, MAX_BRIGHTNESS, -1);
     } else if (timeLeft > timerNow * 2 / 4) {
       // middle2 LED: 255 → 0
-      middle2LedVal = map(timeLeft, timerNow * 3 / 4, timerNow * 2 / 4, MAX_BRIGHTNESS, 0);
+      middle2LedVal = map(timeLeft, timerNow * 3 / 4, timerNow * 2 / 4, MAX_BRIGHTNESS, -1);
     } else if (timeLeft > timerNow * 1 / 4) {
       // middle1 LED: 255 → 0
-      middle1LedVal = map(timeLeft, timerNow * 2 / 4, timerNow * 1 / 4, MAX_BRIGHTNESS, 0);
+      middle1LedVal = map(timeLeft, timerNow * 2 / 4, timerNow * 1 / 4, MAX_BRIGHTNESS, -1);
     } else {
       // lower LED: 255 → 0
-      lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, MAX_BRIGHTNESS, 0);
+      lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, MAX_BRIGHTNESS, -1);
     }
 
     Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
+    
+    posNow = getPosNow();
     setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
+
+    // mpu.update();
+    float pitch = mpu.getAngleY(); // 보정된 Pitch
+    float roll = mpu.getAngleX();  // 보정된 Roll
 
     Serial.print("Roll: ");
     Serial.print(roll);
@@ -86,11 +88,9 @@ void loop() {
     }
 
     // uplight 방향 판별
-    if (abs(roll) < 30) {
-      posNow = UP;
+    if (getPosNow() == UP) {
       Serial.println("UP STATE");
-    } else {
-      posNow = DOWN;
+    } else if (getPosNow() == DOWN) {
       Serial.println("DOWN STATE");
     }
 
@@ -112,16 +112,23 @@ void loop() {
       }
 
       // change colormod
-       modeNow = ( modeNow == RED) ? GREEN : RED;
-
-      // reverse dim direction
-      direction = !direction;
+       modeNow = (modeNow == RED) ? GREEN : RED;
 
       // initialize led brightness val
       upperLedVal = MAX_BRIGHTNESS;
       middle2LedVal = MAX_BRIGHTNESS;
       middle1LedVal = MAX_BRIGHTNESS;
       lowerLedVal = MAX_BRIGHTNESS;
+
+      // change led color to opposite
+      setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
+
+      PositionState posPrev = getPosNow();
+      // stop time till fliped
+      while (posPrev == posNow) {
+        posNow = getPosNow();
+        delay(100);
+      }
     }
 
   }
@@ -182,4 +189,14 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
       0, 0);
   }
   strip.show();
+}
+
+PositionState getPosNow() {
+  mpu.update();
+  // uplight 방향 판별
+  if (abs(mpu.getAngleX()) < 30) {
+    return UP;
+  } else {
+    return DOWN;
+  }
 }
