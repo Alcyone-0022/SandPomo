@@ -26,12 +26,15 @@ byte lowerLedVal = MAX_BRIGHTNESS;
 enum ColorMode { RED, GREEN };
 ColorMode modeNow = RED;
 
-enum PositionState { UP, DOWN };
-PositionState posNow = UP;
+enum upDownState { UP, DOWN };
+upDownState posNow = UP;
+
+enum angleState { VERTICAL, HORIZONTAL };
+posState angleNow = VERTICAL;
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
-PositionState getPosNow();
+upDownState getPosNow();
 
 void setup() {
   Serial.begin(9600);
@@ -47,7 +50,7 @@ void setup() {
   setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
 
   posNow = getPosNow();
-  PositionState posPrev = getPosNow();
+  upDownState posPrev = getPosNow();
   // stop time till fliped when initialized
   while (posPrev == posNow) {
     posNow = getPosNow();
@@ -138,7 +141,7 @@ void loop() {
       // change led color to opposite
       setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
 
-      PositionState posPrev = getPosNow();
+      upDownState posPrev = getPosNow();
       // stop time till fliped
       while (posPrev == posNow) {
         posNow = getPosNow();
@@ -204,7 +207,7 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
   strip.show();
 }
 
-PositionState getPosNow() {
+upDownState getPosNow() {
   mpu.update();
   // uplight 방향 판별
   if (mpu.getAngleX() < -80 && abs(mpu.getAngleY()) < 10) {
@@ -213,3 +216,5 @@ PositionState getPosNow() {
     return DOWN;
   }
 }
+
+bool 
