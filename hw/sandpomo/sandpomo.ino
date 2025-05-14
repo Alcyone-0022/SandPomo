@@ -217,4 +217,11 @@ upDownState getPosNow() {
   }
 }
 
-bool 
+angleState getAngleNow() {
+  mpu.update();
+  if (abs(mpu.getAngleY()) > 80) {
+    return HORIZONTAL;
+  } else {
+    return VERTICAL;
+  }
+}
