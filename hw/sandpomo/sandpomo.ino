@@ -3,6 +3,7 @@
 #include <Wire.h>
 #include <MPU6050_light.h>
 
+#define DEBUG true
 #define LED_PIN     8
 #define NUM_LEDS    8
 #define MAX_BRIGHTNESS 10
@@ -36,13 +37,24 @@ void setup() {
   Serial.begin(9600);
   Wire.setPins(3, 4);
   Wire.begin();
+  strip.begin();
+  strip.show();
 
   byte status = mpu.begin();
   while(status != 0){ delay(10); } // 센서 연결 확인
-  mpu.calcOffsets();  // 자이로/가속도계 오프셋 계산
+  // mpu.calcOffsets();  // 자이로/가속도계 오프셋 계산
 
-  strip.begin();
-  strip.show();
+  setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
+
+  posNow = getPosNow();
+  PositionState posPrev = getPosNow();
+  // stop time till fliped when initialized
+  while (posPrev == posNow) {
+    posNow = getPosNow();
+    Serial.println((posNow == UP) ? "UP" : "DOWN");
+    delay(100);
+  }
+  
 }
 
 void loop() {
@@ -51,6 +63,7 @@ void loop() {
 
     unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
 
+    // calculate led values
     if (timeLeft > timerNow * 3 / 4) {
       // upper LED: 255 → 0
       upperLedVal = map(timeLeft, timerNow, timerNow * 3 / 4, MAX_BRIGHTNESS, -1);
@@ -64,8 +77,6 @@ void loop() {
       // lower LED: 255 → 0
       lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, MAX_BRIGHTNESS, -1);
     }
-
-    Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
     
     posNow = getPosNow();
     setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
@@ -74,26 +85,30 @@ void loop() {
     float pitch = mpu.getAngleY(); // 보정된 Pitch
     float roll = mpu.getAngleX();  // 보정된 Roll
 
-    Serial.print("Roll: ");
-    Serial.print(roll);
-    Serial.print("°\tPitch: ");
-    Serial.print(pitch);
-    Serial.println("°");
 
-    // 자세 판별
-    if((abs(roll) < 20 && abs(roll) > 0) || (abs(roll) < 80 && abs(roll) > 50)) {
-      Serial.println("Upright position");
-    } else {
-      Serial.println("Lying down position");
+    if (DEBUG) {
+      Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
+      
+      Serial.print("Roll: ");
+      Serial.print(roll);
+      Serial.print("°\tPitch: ");
+      Serial.print(pitch);
+      Serial.println("°");
+  
+      // 자세 판별
+      if((abs(roll) < 20 && abs(roll) > 0) || (abs(roll) < 80 && abs(roll) > 50)) {
+        Serial.println("Upright position");
+      } else {
+        Serial.println("Lying down position");
+      }
+  
+      // uplight 방향 판별
+      if (getPosNow() == UP) {
+        Serial.println("UP STATE");
+      } else if (getPosNow() == DOWN) {
+        Serial.println("DOWN STATE");
+      }
     }
-
-    // uplight 방향 판별
-    if (getPosNow() == UP) {
-      Serial.println("UP STATE");
-    } else if (getPosNow() == DOWN) {
-      Serial.println("DOWN STATE");
-    }
-
 
     if (timeLeft - fadeInterval >= fadeInterval) {
       timeLeft = timeLeft - fadeInterval;
@@ -127,12 +142,10 @@ void loop() {
       // stop time till fliped
       while (posPrev == posNow) {
         posNow = getPosNow();
-        delay(100);
+        delay(50);
       }
     }
-
   }
-
 }
 
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode) {
@@ -194,9 +207,9 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
 PositionState getPosNow() {
   mpu.update();
   // uplight 방향 판별
-  if (abs(mpu.getAngleX()) < 30) {
+  if (mpu.getAngleX() < -80 && abs(mpu.getAngleY()) < 10) {
     return UP;
-  } else {
+  } else if (mpu.getAngleX() > 80 && abs(mpu.getAngleY()) < 10) {
     return DOWN;
   }
 }
