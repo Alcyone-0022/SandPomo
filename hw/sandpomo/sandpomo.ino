@@ -30,7 +30,7 @@ enum upDownState { UP, DOWN };
 upDownState posNow = UP;
 
 enum angleState { VERTICAL, HORIZONTAL };
-posState angleNow = VERTICAL;
+angleState angleNow = VERTICAL;
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
@@ -99,7 +99,7 @@ void loop() {
       Serial.println("°");
   
       // 자세 판별
-      if((abs(roll) < 20 && abs(roll) > 0) || (abs(roll) < 80 && abs(roll) > 50)) {
+      if(getAngleNow() == VERTICAL) {
         Serial.println("Upright position");
       } else {
         Serial.println("Lying down position");
