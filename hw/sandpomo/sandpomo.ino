@@ -30,7 +30,7 @@ enum PositionState { UP, DOWN };
 PositionState posNow = UP;
 
 //**** Forwards ****
-void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse);
+void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
 
 void setup() {
   Serial.begin(9600);
@@ -73,9 +73,9 @@ void loop() {
     setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
 
     Serial.print("Roll: ");
-    Serial.print(mpu.getAngleX());
+    Serial.print(roll);
     Serial.print("°\tPitch: ");
-    Serial.print(mpu.getAngleY());
+    Serial.print(pitch);
     Serial.println("°");
 
     // 자세 판별
