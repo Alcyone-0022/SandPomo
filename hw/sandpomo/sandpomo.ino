@@ -34,6 +34,8 @@ angleState angleNow = VERTICAL;
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
+void setLEDYellow();
+void setLEDVal(unsigned long timerNow, unsigned long timeLeft);
 upDownState getPosNow();
 
 void setup() {
@@ -63,35 +65,13 @@ void setup() {
 void loop() {
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
-
-    unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
-
-    // calculate led values
-    if (timeLeft > timerNow * 3 / 4) {
-      // upper LED: 255 → 0
-      upperLedVal = map(timeLeft, timerNow, timerNow * 3 / 4, MAX_BRIGHTNESS, -1);
-    } else if (timeLeft > timerNow * 2 / 4) {
-      // middle2 LED: 255 → 0
-      middle2LedVal = map(timeLeft, timerNow * 3 / 4, timerNow * 2 / 4, MAX_BRIGHTNESS, -1);
-    } else if (timeLeft > timerNow * 1 / 4) {
-      // middle1 LED: 255 → 0
-      middle1LedVal = map(timeLeft, timerNow * 2 / 4, timerNow * 1 / 4, MAX_BRIGHTNESS, -1);
-    } else {
-      // lower LED: 255 → 0
-      lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, MAX_BRIGHTNESS, -1);
-    }
     
-    posNow = getPosNow();
-    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
-
-    // mpu.update();
-    float pitch = mpu.getAngleY(); // 보정된 Pitch
-    float roll = mpu.getAngleX();  // 보정된 Roll
-
-
     if (DEBUG) {
       Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
       
+      mpu.update();
+      float pitch = mpu.getAngleY(); // 보정된 Pitch
+      float roll = mpu.getAngleX();  // 보정된 Roll
       Serial.print("Roll: ");
       Serial.print(roll);
       Serial.print("°\tPitch: ");
@@ -102,7 +82,7 @@ void loop() {
       if(getAngleNow() == VERTICAL) {
         Serial.println("Upright position");
       } else {
-        Serial.println("Lying down position");
+        Serial.println("Lying down (side) position");
       }
   
       // uplight 방향 판별
@@ -113,9 +93,22 @@ void loop() {
       }
     }
 
+    // Control LED at this section
+    unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
+    setLEDVal(timerNow, timeLeft);
+    posNow = getPosNow();
+    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
+
+    // Control timer and current mode at this section
     if (timeLeft - fadeInterval >= fadeInterval) {
+      // if lying down side, stop timer
+      while (getAngleNow() == HORIZONTAL) {
+        setLEDYellow();
+      }
+      // elapse current timer
       timeLeft = timeLeft - fadeInterval;
     } else {
+
       // TIME IS UP!
 
       // initialize timer
@@ -145,7 +138,7 @@ void loop() {
       // stop time till fliped
       while (posPrev == posNow) {
         posNow = getPosNow();
-        delay(50);
+        delay(100);
       }
     }
   }
@@ -205,6 +198,29 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
       0, 0);
   }
   strip.show();
+}
+
+void setLEDYellow(){
+  for (byte i = 0; i < 8; i++) {
+    strip.setPixelColor(i, 0, MAX_BRIGHTNESS, MAX_BRIGHTNESS, 0);
+  }
+}
+
+void setLEDVal(unsigned long timerNow, unsigned long timeLeft) {
+  // calculate and set led values
+  if (timeLeft > timerNow * 3 / 4) {
+    // upper LED: 255 → 0
+    upperLedVal = map(timeLeft, timerNow, timerNow * 3 / 4, MAX_BRIGHTNESS, -1);
+  } else if (timeLeft > timerNow * 2 / 4) {
+    // middle2 LED: 255 → 0
+    middle2LedVal = map(timeLeft, timerNow * 3 / 4, timerNow * 2 / 4, MAX_BRIGHTNESS, -1);
+  } else if (timeLeft > timerNow * 1 / 4) {
+    // middle1 LED: 255 → 0
+    middle1LedVal = map(timeLeft, timerNow * 2 / 4, timerNow * 1 / 4, MAX_BRIGHTNESS, -1);
+  } else {
+    // lower LED: 255 → 0
+    lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, MAX_BRIGHTNESS, -1);
+  }
 }
 
 upDownState getPosNow() {
