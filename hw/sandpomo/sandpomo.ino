@@ -49,10 +49,11 @@ void setup() {
   while(status != 0){ delay(10); } // 센서 연결 확인
   // mpu.calcOffsets();  // 자이로/가속도계 오프셋 계산
 
-  setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
-
+  
   posNow = getPosNow();
   upDownState posPrev = getPosNow();
+  setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
+  
   // stop time till fliped when initialized
   while (posPrev == posNow) {
     posNow = getPosNow();
