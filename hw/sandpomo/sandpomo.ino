@@ -6,7 +6,7 @@
 #define DEBUG true
 #define LED_PIN     8
 #define NUM_LEDS    8
-#define MAX_BRIGHTNESS 10
+#define MAX_BRIGHTNESS 30
 
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 MPU6050 mpu(Wire);
@@ -104,6 +104,7 @@ void loop() {
       // if lying down side, stop timer
       while (getAngleNow() == HORIZONTAL) {
         setLEDYellow();
+        Serial.println("TIME STOPPED");
       }
       // elapse current timer
       timeLeft = timeLeft - fadeInterval;
@@ -201,8 +202,9 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
 }
 
 void setLEDYellow(){
-  for (byte i = 0; i < 8; i++) {
-    strip.setPixelColor(i, 0, MAX_BRIGHTNESS, MAX_BRIGHTNESS, 0);
+  for (byte i = 0; i < NUM_LEDS; i++) {
+    strip.setPixelColor(i, 20, 20, 0, 0);
+    strip.show();
   }
 }
 
