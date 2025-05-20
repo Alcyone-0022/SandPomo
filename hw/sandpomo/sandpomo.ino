@@ -17,6 +17,8 @@ unsigned long restingTime = 0.5*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
 
+bool isTimerInitialized = false;
+
 byte upperLedVal = MAX_BRIGHTNESS;
 byte middle2LedVal = MAX_BRIGHTNESS;
 byte middle1LedVal = MAX_BRIGHTNESS;
@@ -27,7 +29,8 @@ enum ColorMode { RED, GREEN };
 ColorMode modeNow = RED;
 
 enum upDownState { UP, DOWN };
-upDownState posNow = UP;
+upDownState posNow;
+upDownState posPrev;
 
 enum angleState { VERTICAL, HORIZONTAL };
 angleState angleNow = VERTICAL;
@@ -49,9 +52,8 @@ void setup() {
   while(status != 0){ delay(10); } // 센서 연결 확인
   // mpu.calcOffsets();  // 자이로/가속도계 오프셋 계산
 
-  
   posNow = getPosNow();
-  upDownState posPrev = getPosNow();
+  posPrev = getPosNow();
   setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
   
   // stop time till fliped when initialized
@@ -110,38 +112,43 @@ void loop() {
       // elapse current timer
       timeLeft = timeLeft - fadeInterval;
     } else {
-
       // TIME IS UP!
 
-      // initialize timer
-      if ( modeNow == RED) {
-        // colormod now is pomodoro
-        // change to resting
-        timeLeft = restingTime;
-      } else {
-        // colormod now is resting
-        // change to pomodoro
-        timeLeft = pomodoroTime;
+      // initialize timer once!
+      if (!isTimerInitialized) {
+        // initialize timer
+        if ( modeNow == RED) {
+          // colormod now is pomodoro
+          // change to resting
+          timeLeft = restingTime;
+        } else {
+          // colormod now is resting
+          // change to pomodoro
+          timeLeft = pomodoroTime;
+        }
+
+        // change colormod
+        modeNow = (modeNow == RED) ? GREEN : RED;
+
+        // initialize led brightness val
+        upperLedVal = MAX_BRIGHTNESS;
+        middle2LedVal = MAX_BRIGHTNESS;
+        middle1LedVal = MAX_BRIGHTNESS;
+        lowerLedVal = MAX_BRIGHTNESS;
+
+        // change led color to opposite
+        setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
+
+        posPrev = getPosNow();
       }
-
-      // change colormod
-       modeNow = (modeNow == RED) ? GREEN : RED;
-
-      // initialize led brightness val
-      upperLedVal = MAX_BRIGHTNESS;
-      middle2LedVal = MAX_BRIGHTNESS;
-      middle1LedVal = MAX_BRIGHTNESS;
-      lowerLedVal = MAX_BRIGHTNESS;
-
-      // change led color to opposite
-      setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
-
-      upDownState posPrev = getPosNow();
+      
       // stop time till fliped
-      while (posPrev == posNow) {
+      if (posPrev == posNow) {
         posNow = getPosNow();
+        // well... actually this delay will not block main loop.
         delay(100);
       }
+    
     }
   }
 }
