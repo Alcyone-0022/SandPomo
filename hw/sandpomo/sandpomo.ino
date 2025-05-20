@@ -67,6 +67,7 @@ void setup() {
 
 void loop() {
   if (millis() - prevMillis >= fadeInterval) {
+    isTimerInitialized = false;
     prevMillis = millis();
     
     if (DEBUG) {
@@ -140,6 +141,7 @@ void loop() {
         setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
 
         posPrev = getPosNow();
+        isTimerInitialized = true;
       }
       
       // stop time till fliped
