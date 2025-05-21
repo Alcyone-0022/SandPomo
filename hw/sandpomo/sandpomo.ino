@@ -17,6 +17,11 @@ unsigned long restingTime = 0.5*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 10; // 밝기 갱신 주기(ms)
 
+// for serial input
+int num1 = 0;
+int num2 = 0;
+String inputString = "";
+
 bool isTimeUp = false;
 
 byte upperLedVal = MAX_BRIGHTNESS;
@@ -49,7 +54,7 @@ angleState getAngleNow();
 bool isUpsideDown();
 
 void setup() {
-  Serial.begin(2000000);
+  Serial.begin(115200);
   Wire.setPins(3, 4);
   Wire.begin();
   strip.begin();
@@ -188,7 +193,7 @@ void loop() {
         delay(100);
       }
 
-      // exit timeup state (end for waiting flip)
+      // exit timeup state (end waiting flip)
       if (posPrev != posNow) {
         isTimeUp = false;
       }
@@ -286,7 +291,6 @@ void setLEDVal(unsigned long timerNow, unsigned long timeLeft) {
 
 void listenToSerial() {
   while (Serial) {
-    Serial.println(millis());
     if (millis() - prevMillis >= 2000) {
       prevMillis = millis();
       tick = !tick;
@@ -298,7 +302,31 @@ void listenToSerial() {
         strip.clear();
         strip.show();
     }
+
+    if (Serial.available()) {
+      char inChar = (char)Serial.read();
+      if (inChar == '\n' || inChar == '\r') { // 엔터(줄바꿈) 입력 시 처리
+        inputString.trim(); // 앞뒤 공백 제거
+        int spaceIndex = inputString.indexOf(' ');
+        if (spaceIndex > 0) {
+          String firstNum = inputString.substring(0, spaceIndex);
+          String secondNum = inputString.substring(spaceIndex + 1);
+          num1 = firstNum.toInt();
+          num2 = secondNum.toInt();
+          Serial.print("첫 번째 숫자: ");
+          Serial.println(num1);
+          Serial.print("두 번째 숫자: ");
+          Serial.println(num2);
+        } else {
+          Serial.println("입력 형식이 올바르지 않습니다!");
+        }
+        inputString = ""; // 입력 문자열 초기화
+      } else {
+        inputString += inChar;
+      }
+    }
   }
+  ESP.restart();
 }
 
 upDownState getPosNow() {
