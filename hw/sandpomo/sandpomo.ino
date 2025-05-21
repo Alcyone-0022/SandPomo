@@ -35,11 +35,16 @@ upDownState posPrev;
 enum angleState { VERTICAL, HORIZONTAL };
 angleState angleNow = VERTICAL;
 
+bool upsideDown = false;
+
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
 void setLEDYellow();
+void setLEDRed();
 void setLEDVal(unsigned long timerNow, unsigned long timeLeft);
 upDownState getPosNow();
+angleState getAngleNow();
+bool isUpsideDown();
 
 void setup() {
   Serial.begin(2000000);
@@ -106,9 +111,12 @@ void loop() {
       } else if (getPosNow() == DOWN) {
         Serial.println("DOWN STATE");
       }
+
+      if (isUpsideDown()) {
+        Serial.println("UPSIDE DOWN STATE");
+      }
     }
 
-    // Control LED at this section
     unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
   
     // Control timer and current mode at this section
@@ -123,6 +131,12 @@ void loop() {
       if (getAngleNow() == HORIZONTAL) {
         setLEDYellow();
         Serial.println("TIME STOPPED");
+      } else if (isUpsideDown()){
+        // if upside down, initialize timer
+        timerNow = pomodoroTime;
+        timeLeft = timerNow;
+        setLEDRed();
+        Serial.println("TIME INITIALIZED");
       } else {
         // elapse current timer
         timeLeft = timeLeft - fadeInterval;
@@ -231,9 +245,16 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
   strip.show();
 }
 
-void setLEDYellow(){
+void setLEDYellow() {
   for (byte i = 0; i < NUM_LEDS; i++) {
     strip.setPixelColor(i, 20, 20, 0, 0);
+  }
+  strip.show();
+}
+
+void setLEDRed() {
+  for (byte i = 0; i < NUM_LEDS; i++) {
+    strip.setPixelColor(i, 20, 0, 0, 0);
   }
   strip.show();
 }
@@ -271,5 +292,14 @@ angleState getAngleNow() {
     return HORIZONTAL;
   } else {
     return VERTICAL;
+  }
+}
+
+bool isUpsideDown() {
+  mpu.update();
+  if (abs(mpu.getAngleX()) > 160) {
+    return true;
+  } else {
+    return false;
   }
 }
