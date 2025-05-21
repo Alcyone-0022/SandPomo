@@ -15,7 +15,7 @@ unsigned long prevMillis = 0;
 unsigned long pomodoroTime = 0.5*60*1000;
 unsigned long restingTime = 0.5*60*1000;
 unsigned long timeLeft = pomodoroTime;
-const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
+const uint16_t fadeInterval = 10; // 밝기 갱신 주기(ms)
 
 bool isTimeUp = false;
 
@@ -42,7 +42,7 @@ void setLEDVal(unsigned long timerNow, unsigned long timeLeft);
 upDownState getPosNow();
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(2000000);
   Wire.setPins(3, 4);
   Wire.begin();
   strip.begin();
@@ -55,6 +55,14 @@ void setup() {
     delay(100);
   } // 센서 연결 확인
   // mpu.calcOffsets();  // 자이로/가속도계 오프셋 계산
+
+  setLEDYellow();
+
+  // for initial calibration of MPU
+  prevMillis = millis();
+  while (millis() - prevMillis <= 1000) {
+    mpu.update();
+  }
 
   posNow = getPosNow();
   posPrev = getPosNow();
@@ -226,8 +234,8 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
 void setLEDYellow(){
   for (byte i = 0; i < NUM_LEDS; i++) {
     strip.setPixelColor(i, 20, 20, 0, 0);
-    strip.show();
   }
+  strip.show();
 }
 
 void setLEDVal(unsigned long timerNow, unsigned long timeLeft) {
