@@ -4,7 +4,7 @@
 #include <MPU6050_light.h>
 #include <EEPROM.h>
 
-#define DEBUG true
+#define DEBUG false
 #define LED_PIN     8
 #define NUM_LEDS    8
 #define MAX_BRIGHTNESS 30
@@ -81,7 +81,6 @@ void setup() {
 
   posNow = getPosNow();
   posPrev = getPosNow();
-  setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
   
   // stop time till fliped when initialized
   while (posPrev == posNow) {
@@ -89,6 +88,7 @@ void setup() {
     Serial.println((posNow == UP) ? "UP" : "DOWN");
     // blocking function. listen to serial to get config values
     listenToSerial();
+    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
     delay(100);
   }
   
@@ -97,7 +97,7 @@ void setup() {
 void loop() {
 
   // blocking function. listen to serial to get config values
-  // listenToSerial();
+  if (!DEBUG) { listenToSerial(); }
 
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
