@@ -135,6 +135,7 @@ void loop() {
         // if upside down, initialize timer
         timerNow = pomodoroTime;
         timeLeft = timerNow;
+        modeNow = RED;
         setLEDRed();
         Serial.println("TIME INITIALIZED");
       } else {
