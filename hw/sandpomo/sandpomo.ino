@@ -87,6 +87,7 @@ void setup() {
 
 void loop() {
 
+  // blocking function. listen to serial to get config values
   listenToSerial();
 
   if (millis() - prevMillis >= fadeInterval) {
@@ -321,7 +322,7 @@ angleState getAngleNow() {
 
 bool isUpsideDown() {
   mpu.update();
-  if (abs(mpu.getAngleX()) > 160) {
+  if (abs(mpu.getAngleX()) > 170) {
     return true;
   } else {
     return false;
