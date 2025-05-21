@@ -326,7 +326,6 @@ void listenToSerial() {
       }
     }
   }
-  ESP.restart();
 }
 
 upDownState getPosNow() {
