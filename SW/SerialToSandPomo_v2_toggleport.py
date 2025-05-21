@@ -4,7 +4,7 @@ import serial
 import serial.tools.list_ports
 import time
 
-BAUD_RATE = 115200  # 긱블 미니(ESP32-C3) 기준, 필요시 변경
+BAUD_RATE = 2000000  # 긱블 미니(ESP32-C3) 기준, 필요시 변경
 
 def list_serial_ports():
     # 포트와 기기명(설명) 함께 반환
