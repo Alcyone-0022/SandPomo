@@ -2,8 +2,9 @@
 #include <Adafruit_NeoPixel.h>
 #include <Wire.h>
 #include <MPU6050_light.h>
+#include <EEPROM.h>
 
-#define DEBUG false
+#define DEBUG true
 #define LED_PIN     8
 #define NUM_LEDS    8
 #define MAX_BRIGHTNESS 30
@@ -12,8 +13,8 @@ Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 MPU6050 mpu(Wire);
 
 unsigned long prevMillis = 0;
-unsigned long pomodoroTime = 0.5*60*1000;
-unsigned long restingTime = 0.5*60*1000;
+unsigned long pomodoroTime;
+unsigned long restingTime;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 10; // 밝기 갱신 주기(ms)
 
@@ -55,10 +56,9 @@ bool isUpsideDown();
 
 void setup() {
   Serial.begin(115200);
+  EEPROM.begin(8);
   Wire.setPins(3, 4);
   Wire.begin();
-  strip.begin();
-  strip.show();
 
   byte status = mpu.begin();
   while(status != 0){ 
@@ -76,6 +76,9 @@ void setup() {
     mpu.update();
   }
 
+  // set time values from EEPROM
+  setTimeVal();
+
   posNow = getPosNow();
   posPrev = getPosNow();
   setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
@@ -84,6 +87,7 @@ void setup() {
   while (posPrev == posNow) {
     posNow = getPosNow();
     Serial.println((posNow == UP) ? "UP" : "DOWN");
+    // blocking function. listen to serial to get config values
     listenToSerial();
     delay(100);
   }
@@ -93,14 +97,18 @@ void setup() {
 void loop() {
 
   // blocking function. listen to serial to get config values
-  listenToSerial();
+  // listenToSerial();
 
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
-    
+  
+    unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
+
     if (DEBUG) {
       Serial.print(upperLedVal); Serial.print(" "); Serial.print(middle2LedVal); Serial.print(" "); Serial.print(middle1LedVal); Serial.print(" "); Serial.println(lowerLedVal);
-      
+      // Serial.print(pomodoroTime); Serial.print(" "); Serial.println(restingTime);
+      Serial.print(timerNow); Serial.print(" "); Serial.println(timeLeft);
+
       mpu.update();
       float pitch = mpu.getAngleY(); // 보정된 Pitch
       float roll = mpu.getAngleX();  // 보정된 Roll
@@ -128,8 +136,6 @@ void loop() {
         Serial.println("UPSIDE DOWN STATE");
       }
     }
-
-    unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
   
     // Control timer and current mode at this section
     if (timeLeft - fadeInterval >= fadeInterval && !isTimeUp) {
@@ -289,6 +295,18 @@ void setLEDVal(unsigned long timerNow, unsigned long timeLeft) {
   }
 }
 
+void setTimeVal(){
+  int read1;
+  int read2;
+
+  EEPROM.get(0, read1);
+  EEPROM.get(4, read2);
+
+  pomodoroTime = read1 * 60 * 1000;
+  restingTime = read2 * 60 * 1000;
+  timeLeft = pomodoroTime;
+}
+
 void listenToSerial() {
   while (Serial) {
     if (millis() - prevMillis >= 2000) {
@@ -317,6 +335,11 @@ void listenToSerial() {
           Serial.println(num1);
           Serial.print("두 번째 숫자: ");
           Serial.println(num2);
+
+          EEPROM.put(0, num1);
+          EEPROM.put(4, num2);
+          EEPROM.commit();
+          setTimeVal();
         } else {
           Serial.println("입력 형식이 올바르지 않습니다!");
         }
