@@ -43,6 +43,7 @@ void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMod
 void setLEDYellow();
 void setLEDRed();
 void setLEDVal(unsigned long timerNow, unsigned long timeLeft);
+void listenToSerial();
 upDownState getPosNow();
 angleState getAngleNow();
 bool isUpsideDown();
@@ -78,27 +79,15 @@ void setup() {
   while (posPrev == posNow) {
     posNow = getPosNow();
     Serial.println((posNow == UP) ? "UP" : "DOWN");
+    listenToSerial();
     delay(100);
   }
   
 }
 
 void loop() {
-  
-  while (Serial) {
-    Serial.println(millis());
-    if (millis() - prevMillis >= 2000) {
-      prevMillis = millis();
-      tick = !tick;
-    }
 
-    if (tick) {
-        setLEDYellow();
-      } else {
-        strip.clear();
-        strip.show();
-    }
-  }
+  listenToSerial();
 
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
@@ -291,6 +280,23 @@ void setLEDVal(unsigned long timerNow, unsigned long timeLeft) {
   } else {
     // lower LED: 255 → 0
     lowerLedVal = map(timeLeft, timerNow * 1 / 4, 0, MAX_BRIGHTNESS, -1);
+  }
+}
+
+void listenToSerial() {
+  while (Serial) {
+    Serial.println(millis());
+    if (millis() - prevMillis >= 2000) {
+      prevMillis = millis();
+      tick = !tick;
+    }
+
+    if (tick) {
+        setLEDYellow();
+      } else {
+        strip.clear();
+        strip.show();
+    }
   }
 }
 
