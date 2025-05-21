@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <MPU6050_light.h>
 
-#define DEBUG true
+#define DEBUG false
 #define LED_PIN     8
 #define NUM_LEDS    8
 #define MAX_BRIGHTNESS 30
@@ -36,6 +36,7 @@ enum angleState { VERTICAL, HORIZONTAL };
 angleState angleNow = VERTICAL;
 
 bool upsideDown = false;
+bool tick = false; // for blinking led when usb connected
 
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
@@ -83,6 +84,22 @@ void setup() {
 }
 
 void loop() {
+  
+  while (Serial) {
+    Serial.println(millis());
+    if (millis() - prevMillis >= 2000) {
+      prevMillis = millis();
+      tick = !tick;
+    }
+
+    if (tick) {
+        setLEDYellow();
+      } else {
+        strip.clear();
+        strip.show();
+    }
+  }
+
   if (millis() - prevMillis >= fadeInterval) {
     prevMillis = millis();
     
