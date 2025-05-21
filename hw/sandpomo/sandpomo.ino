@@ -17,7 +17,7 @@ unsigned long restingTime = 0.5*60*1000;
 unsigned long timeLeft = pomodoroTime;
 const uint16_t fadeInterval = 50; // 밝기 갱신 주기(ms)
 
-bool isTimerInitialized = false;
+bool isTimeUp = false;
 
 byte upperLedVal = MAX_BRIGHTNESS;
 byte middle2LedVal = MAX_BRIGHTNESS;
@@ -49,7 +49,11 @@ void setup() {
   strip.show();
 
   byte status = mpu.begin();
-  while(status != 0){ delay(10); } // 센서 연결 확인
+  while(status != 0){ 
+    status = mpu.begin();
+    Serial.println("NO MPU FOUND!");
+    delay(100);
+  } // 센서 연결 확인
   // mpu.calcOffsets();  // 자이로/가속도계 오프셋 계산
 
   posNow = getPosNow();
@@ -67,7 +71,6 @@ void setup() {
 
 void loop() {
   if (millis() - prevMillis >= fadeInterval) {
-    isTimerInitialized = false;
     prevMillis = millis();
     
     if (DEBUG) {
@@ -99,24 +102,28 @@ void loop() {
 
     // Control LED at this section
     unsigned long timerNow = (modeNow == RED) ? pomodoroTime : restingTime;
-    setLEDVal(timerNow, timeLeft);
-    posNow = getPosNow();
-    setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
-
+  
     // Control timer and current mode at this section
-    if (timeLeft - fadeInterval >= fadeInterval) {
+    if (timeLeft - fadeInterval >= fadeInterval && !isTimeUp) {
+      isTimeUp = false;
+
+      setLEDVal(timerNow, timeLeft);
+      posNow = getPosNow();
+      setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? false : true, modeNow);
+
       // if lying down side, stop timer
-      while (getAngleNow() == HORIZONTAL) {
+      if (getAngleNow() == HORIZONTAL) {
         setLEDYellow();
         Serial.println("TIME STOPPED");
+      } else {
+        // elapse current timer
+        timeLeft = timeLeft - fadeInterval;
       }
-      // elapse current timer
-      timeLeft = timeLeft - fadeInterval;
     } else {
       // TIME IS UP!
 
       // initialize timer once!
-      if (!isTimerInitialized) {
+      if (!isTimeUp) {
         // initialize timer
         if ( modeNow == RED) {
           // colormod now is pomodoro
@@ -141,7 +148,7 @@ void loop() {
         setLED(upperLedVal, middle2LedVal, middle1LedVal, lowerLedVal, (posNow == UP) ? true : false, modeNow);
 
         posPrev = getPosNow();
-        isTimerInitialized = true;
+        isTimeUp = true;
       }
       
       // stop time till fliped
@@ -149,6 +156,11 @@ void loop() {
         posNow = getPosNow();
         // well... actually this delay will not block main loop.
         delay(100);
+      }
+
+      // exit timeup state (end for waiting flip)
+      if (posPrev != posNow) {
+        isTimeUp = false;
       }
     
     }
