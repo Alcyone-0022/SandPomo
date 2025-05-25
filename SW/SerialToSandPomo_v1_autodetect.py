@@ -3,7 +3,7 @@ import serial
 import serial.tools.list_ports
 import time
 
-BAUD_RATE = 2000000 # ESP32 기본 baudrate 예시
+BAUD_RATE = 115200 # ESP32 기본 baudrate 예시
 
 def find_esp32_port():
     # ESP32 계열 주요 VID/PID (필요시 추가)

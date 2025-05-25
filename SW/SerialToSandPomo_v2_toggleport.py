@@ -4,7 +4,7 @@ import serial
 import serial.tools.list_ports
 import time
 
-BAUD_RATE = 2000000  # H/W 코드내 보드레이트와 일치
+BAUD_RATE = 115200  # H/W 코드내 보드레이트와 일치
 
 def list_serial_ports():
     ports = serial.tools.list_ports.comports()
