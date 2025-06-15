@@ -4,7 +4,7 @@
 #include <MPU6050_light.h>
 #include <EEPROM.h>
 
-#define DEBUG false
+#define DEBUG true
 #define LED_PIN     8
 #define NUM_LEDS    8
 #define MAX_BRIGHTNESS 30
@@ -44,12 +44,15 @@ angleState angleNow = VERTICAL;
 bool upsideDown = false;
 bool tick = false; // for blinking led when usb connected
 
+byte sessionCnt = 0;
+
 //**** Forwards ****
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode);
 void setLEDYellow();
 void setLEDRed();
 void setLEDVal(unsigned long timerNow, unsigned long timeLeft);
 void listenToSerial();
+void showSessionCnt();
 upDownState getPosNow();
 angleState getAngleNow();
 bool isUpsideDown();
@@ -174,7 +177,12 @@ void loop() {
           // colormod now is resting
           // change to pomodoro
           timeLeft = pomodoroTime;
+
+          // increase session count
+          sessionCnt++;
         }
+        
+        showSessionCnt();
 
         // change colormod
         modeNow = (modeNow == RED) ? GREEN : RED;
@@ -209,6 +217,8 @@ void loop() {
 }
 
 void setLED(byte upper, byte mid2, byte mid1, byte lower, bool reverse, ColorMode colorMode) {
+  strip.clear();
+  
   uint8_t r = (colorMode == RED) ? upper : 0;
   uint8_t g = (colorMode == GREEN) ? upper : 0;
   uint8_t r_mid2 = (colorMode == RED) ? mid2 : 0;
@@ -377,4 +387,30 @@ bool isUpsideDown() {
   } else {
     return false;
   }
+}
+
+void showSessionCnt() {
+  if (sessionCnt == 0) return;
+
+  strip.clear();
+  strip.show();
+
+  // 3번 깜빡임
+  for (byte i = 0; i < 3; i++) {
+    if (posNow == DOWN) {
+      for (byte ii = 0; ii < sessionCnt % 8; ii++){
+        strip.setPixelColor(ii, 20, 20, 20, 0);
+      }
+    } else {
+      for (byte ii = 7; ii > 7 - (sessionCnt % 8); ii--){
+        strip.setPixelColor(ii, 20, 20, 20, 0);
+      }
+    }
+    strip.show();
+    delay(500);
+    strip.clear();
+    strip.show();
+    delay(500);
+  }
+
 }
